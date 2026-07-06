@@ -1,9 +1,91 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Calendar, MapPin, Phone, Clock, Instagram, Facebook, Twitter, ChevronRight, Star, Check, ChevronDown } from 'lucide-react'
+import { Menu, X, Calendar, MapPin, Phone, Clock, Instagram, Facebook, Twitter, ChevronRight, Star, Check, ChevronDown, Gift } from 'lucide-react'
 import { useInView } from 'react-intersection-observer'
 
-function Header() {
+function PromoModal({ onApplyPromo, onSkip }) {
+  const [promoCode, setPromoCode] = useState('')
+  const [error, setError] = useState('')
+  const [isApplying, setIsApplying] = useState(false)
+
+  const handleApply = () => {
+    setIsApplying(true)
+    setTimeout(() => {
+      if (promoCode.toUpperCase() === 'WELLBREW') {
+        onApplyPromo(20) // 20% discount
+        setError('')
+      } else {
+        setError('Kode promo tidak valid. Coba lagi!')
+      }
+      setIsApplying(false)
+    }, 500)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-900/80 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="bg-white max-w-md w-full mx-6 p-8 rounded-2xl shadow-2xl relative"
+      >
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-sage-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Gift size={40} className="text-sage-600" />
+          </div>
+          <h2 className="text-3xl font-serif font-semibold text-stone-900 mb-2">
+            Punya Kode Promo?
+          </h2>
+          <p className="text-stone-600">
+            Masukkan kode promo Anda untuk mendapatkan diskon spesial!
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => {
+                setPromoCode(e.target.value)
+                setError('')
+              }}
+              placeholder="Masukkan kode promo..."
+              className="w-full px-4 py-4 border-2 border-stone-200 rounded-lg text-center text-lg font-medium tracking-wider focus:outline-none focus:border-sage-600 transition-colors"
+              onKeyDown={(e) => e.key === 'Enter' && handleApply()}
+            />
+            {error && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-red-500 text-sm text-center mt-2"
+              >
+                {error}
+              </motion.p>
+            )}
+          </div>
+
+          <button
+            onClick={handleApply}
+            disabled={isApplying || !promoCode}
+            className="w-full btn-primary py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isApplying ? 'Memeriksa...' : 'Terapkan Kode Promo'}
+          </button>
+
+          <button
+            onClick={onSkip}
+            className="w-full text-stone-500 hover:text-stone-700 font-medium py-2 transition-colors"
+          >
+            Skip, lanjutkan ke website
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+function Header({ discount }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -15,7 +97,16 @@ function Header() {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-stone-50/95 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
-      <div className="container-custom flex items-center justify-between">
+      {discount > 0 && (
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="bg-sage-600 text-white text-center py-2 text-sm font-medium"
+        >
+          🎉 Diskon {discount}% aktif! Gunakan kode promo WELLBREW
+        </motion.div>
+      )}
+      <div className={`container-custom flex items-center justify-between ${discount > 0 ? '' : 'pt-0'}`}>
         <a href="#" className="text-2xl font-serif font-semibold tracking-tight text-stone-900">
           Wellness & Spa
         </a>
@@ -208,7 +299,7 @@ function About() {
   )
 }
 
-function Services() {
+function Services({ discount }) {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 })
 
   const services = [
@@ -216,45 +307,54 @@ function Services() {
       name: 'Signature Massage',
       description: 'Kombinasi unik teknik pijat tradisional dan modern yang disesuaikan dengan kebutuhan tubuh Anda.',
       duration: '90 - 120 menit',
-      price: '270.000',
+      price: 270000,
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=professional%20relaxing%20massage%20treatment%2C%20calm%20spa%20room%2C%20soft%20lighting&image_size=square_hd'
     },
     {
       name: 'Foot Reflexology',
       description: 'Perawatan refleksi kaki yang merangsang titik-titik energi untuk meningkatkan sirkulasi dan kesehatan.',
       duration: '90 menit',
-      price: '175.000',
+      price: 175000,
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=foot%20reflexology%20treatment%2C%20spa%20setting%2C%20relaxing%20atmosphere&image_size=square_hd'
     },
     {
       name: 'Deep Tissue Healing',
       description: 'Perawatan intensif untuk mengatasi ketegangan otot dan nyeri kronis dengan teknik pijat mendalam.',
       duration: '90 menit',
-      price: '310.000',
+      price: 310000,
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=deep%20tissue%20massage%2C%20professional%20therapist%2C%20spa%20environment&image_size=square_hd'
     },
     {
       name: 'Hot Stone Therapy',
       description: 'Terapi menggunakan batu basalt hangat untuk melepaskan ketegangan dan meningkatkan relaksasi.',
       duration: '90 menit',
-      price: '350.000',
+      price: 350000,
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=hot%20stone%20massage%2C%20luxury%20spa%2C%20relaxing%20experience&image_size=square_hd'
     },
     {
       name: 'Body Scrub & Wrap',
       description: 'Perawatan eksfoliasi dan wrap dengan bahan alami untuk kulit yang lembut dan bercahaya.',
       duration: '60 menit',
-      price: '165.000',
+      price: 165000,
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=body%20scrub%20treatment%2C%20natural%20ingredients%2C%20spa%20salon&image_size=square_hd'
     },
     {
       name: 'Facial Treatment',
       description: 'Perawatan wajah premium dengan produk organik untuk meremajakan dan menutrisi kulit.',
       duration: '60 - 90 menit',
-      price: '250.000',
+      price: 250000,
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=facial%20treatment%2C%20luxury%20spa%2C%20professional%20skincare&image_size=square_hd'
     }
   ]
+
+  const formatPrice = (price) => {
+    return price.toLocaleString('id-ID')
+  }
+
+  const calculateDiscount = (price) => {
+    if (discount <= 0) return null
+    return Math.round(price * (1 - discount / 100))
+  }
 
   return (
     <section id="layanan" className="section-padding bg-white">
@@ -278,42 +378,63 @@ function Services() {
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((service, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="card-hover bg-stone-50 overflow-hidden"
-            >
-              <div className="aspect-[4/3] overflow-hidden">
-                <img
-                  src={service.image}
-                  alt={service.name}
-                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-                />
-              </div>
-              <div className="p-8">
-                <h3 className="text-2xl font-serif font-semibold text-stone-900 mb-3">
-                  {service.name}
-                </h3>
-                <p className="text-stone-600 mb-6 leading-relaxed">
-                  {service.description}
-                </p>
-                <div className="flex items-center justify-between pt-4 border-t border-stone-200">
-                  <div>
-                    <p className="text-stone-500 text-sm mb-1">{service.duration}</p>
-                    <p className="text-2xl font-serif font-semibold text-sage-600">
-                      Rp {service.price}
-                    </p>
-                  </div>
-                  <a href="#kontak" className="text-sage-600 font-medium flex items-center gap-2 hover:gap-3 transition-all">
-                    Pesan <ChevronRight size={18} />
-                  </a>
+          {services.map((service, index) => {
+            const discountedPrice = calculateDiscount(service.price)
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="card-hover bg-stone-50 overflow-hidden"
+              >
+                <div className="aspect-[4/3] overflow-hidden relative">
+                  <img
+                    src={service.image}
+                    alt={service.name}
+                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                  />
+                  {discountedPrice && (
+                    <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg">
+                      -{discount}%
+                    </div>
+                  )}
                 </div>
-              </div>
-            </motion.div>
-          ))}
+                <div className="p-8">
+                  <h3 className="text-2xl font-serif font-semibold text-stone-900 mb-3">
+                    {service.name}
+                  </h3>
+                  <p className="text-stone-600 mb-6 leading-relaxed">
+                    {service.description}
+                  </p>
+                  <div className="flex items-center justify-between pt-4 border-t border-stone-200">
+                    <div>
+                      <p className="text-stone-500 text-sm mb-1">{service.duration}</p>
+                      <div className="flex items-baseline gap-2">
+                        {discountedPrice ? (
+                          <>
+                            <p className="text-sm text-stone-400 line-through">
+                              Rp {formatPrice(service.price)}
+                            </p>
+                            <p className="text-2xl font-serif font-semibold text-red-600">
+                              Rp {formatPrice(discountedPrice)}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-2xl font-serif font-semibold text-sage-600">
+                            Rp {formatPrice(service.price)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <a href="#kontak" className="text-sage-600 font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                      Pesan <ChevronRight size={18} />
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </section>
@@ -841,12 +962,29 @@ function Footer() {
 }
 
 function App() {
+  const [showPromoModal, setShowPromoModal] = useState(true)
+  const [discount, setDiscount] = useState(0)
+
+  const handleApplyPromo = (discountPercentage) => {
+    setDiscount(discountPercentage)
+    setShowPromoModal(false)
+  }
+
+  const handleSkip = () => {
+    setShowPromoModal(false)
+  }
+
   return (
     <div className="min-h-screen">
-      <Header />
+      <AnimatePresence>
+        {showPromoModal && (
+          <PromoModal onApplyPromo={handleApplyPromo} onSkip={handleSkip} />
+        )}
+      </AnimatePresence>
+      <Header discount={discount} />
       <Hero />
       <About />
-      <Services />
+      <Services discount={discount} />
       <Philosophy />
       <Facilities />
       <Testimonials />
