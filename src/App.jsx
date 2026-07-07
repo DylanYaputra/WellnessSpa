@@ -1,7 +1,384 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Calendar, MapPin, Phone, Clock, Instagram, Facebook, Twitter, ChevronRight, Star, Check, ChevronDown, Gift } from 'lucide-react'
+import { Menu, X, Calendar, MapPin, Phone, Clock, Instagram, Facebook, Twitter, ChevronRight, Star, Check, ChevronDown, Gift, CreditCard, Smartphone, Building2, CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react'
 import { useInView } from 'react-intersection-observer'
+
+function BookingModal({ isOpen, onClose, service, discount }) {
+  const [step, setStep] = useState(1) // 1: Form, 2: Payment, 3: Success
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    date: '',
+    time: '',
+    notes: '',
+    location: 'Cabang Pusat'
+  })
+  const [paymentMethod, setPaymentMethod] = useState('credit_card')
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const formatPrice = (price) => {
+    return price.toLocaleString('id-ID')
+  }
+
+  const calculateFinalPrice = () => {
+    if (!service) return 0
+    if (discount <= 0) return service.price
+    return Math.round(service.price * (1 - discount / 100))
+  }
+
+  const handleSubmitForm = (e) => {
+    e.preventDefault()
+    setStep(2)
+  }
+
+  const handlePayment = async () => {
+    setIsProcessing(true)
+    // Simulate payment processing
+    await new Promise(resolve => setTimeout(resolve, 3000))
+    setIsProcessing(false)
+    setStep(3)
+  }
+
+  if (!isOpen || !service) return null
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-stone-900/80 backdrop-blur-sm p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-stone-200 p-6 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            {step > 1 && step < 3 && (
+              <button onClick={() => setStep(step - 1)} className="p-2 hover:bg-stone-100 rounded-full">
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            <div>
+              <h2 className="text-xl font-serif font-semibold text-stone-900">
+                {step === 1 && 'Booking Perawatan'}
+                {step === 2 && 'Pembayaran'}
+                {step === 3 && 'Pesanan Berhasil!'}
+              </h2>
+              <p className="text-sm text-stone-500">{service.name}</p>
+            </div>
+          </div>
+          {step < 3 && (
+            <button onClick={onClose} className="p-2 hover:bg-stone-100 rounded-full">
+              <X size={24} />
+            </button>
+          )}
+        </div>
+
+        {/* Step 1: Booking Form */}
+        {step === 1 && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="p-6"
+          >
+            <form onSubmit={handleSubmitForm} className="space-y-5">
+              <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">Nama Lengkap</label>
+                  <input
+                    required
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-sage-500 focus:border-transparent"
+                    placeholder="Masukkan nama Anda"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">Nomor Telepon</label>
+                  <input
+                    required
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-sage-500 focus:border-transparent"
+                    placeholder="081234567890"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">Email</label>
+                <input
+                  required
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-sage-500 focus:border-transparent"
+                  placeholder="email@example.com"
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">Tanggal</label>
+                  <input
+                    required
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-sage-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">Waktu</label>
+                  <select
+                    required
+                    value={formData.time}
+                    onChange={(e) => setFormData({...formData, time: e.target.value})}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-sage-500 focus:border-transparent"
+                  >
+                    <option value="">Pilih waktu</option>
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option>
+                    <option value="13:00">13:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="15:00">15:00</option>
+                    <option value="16:00">16:00</option>
+                    <option value="17:00">17:00</option>
+                    <option value="18:00">18:00</option>
+                    <option value="19:00">19:00</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">Lokasi</label>
+                <select
+                  value={formData.location}
+                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-sage-500 focus:border-transparent"
+                >
+                  <option value="Cabang Pusat">Cabang Pusat - Jl. Sudirman No. 123</option>
+                  <option value="Cabang Selatan">Cabang Selatan - Jl. Senopati No. 45</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">Catatan (Opsional)</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-sage-500 focus:border-transparent resize-none"
+                  placeholder="Ada permintaan khusus?"
+                />
+              </div>
+
+              {/* Order Summary */}
+              <div className="bg-stone-50 rounded-xl p-5 border border-stone-200">
+                <h3 className="font-semibold text-stone-900 mb-4">Ringkasan Pesanan</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-stone-600">{service.name}</span>
+                    <span className="font-medium">Rp {formatPrice(service.price)}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Diskon {discount}%</span>
+                      <span>- Rp {formatPrice(service.price - calculateFinalPrice())}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-stone-200 pt-2 mt-2">
+                    <div className="flex justify-between text-lg font-semibold text-stone-900">
+                      <span>Total</span>
+                      <span className="text-sage-600">Rp {formatPrice(calculateFinalPrice())}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full btn-primary py-4 text-lg"
+              >
+                Lanjut ke Pembayaran
+              </button>
+            </form>
+          </motion.div>
+        )}
+
+        {/* Step 2: Payment */}
+        {step === 2 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="p-6"
+          >
+            <div className="space-y-6">
+              {/* Payment Methods */}
+              <div>
+                <h3 className="font-semibold text-stone-900 mb-4">Pilih Metode Pembayaran</h3>
+                <div className="grid gap-3">
+                  {[
+                    { id: 'credit_card', name: 'Kartu Kredit/Debit', icon: CreditCard },
+                    { id: 'ewallet', name: 'E-Wallet (GoPay/OVO/DANA)', icon: Smartphone },
+                    { id: 'bank_transfer', name: 'Transfer Bank', icon: Building2 }
+                  ].map((method) => (
+                    <label
+                      key={method.id}
+                      className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                        paymentMethod === method.id
+                          ? 'border-sage-600 bg-sage-50'
+                          : 'border-stone-200 hover:border-stone-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment"
+                        value={method.id}
+                        checked={paymentMethod === method.id}
+                        onChange={() => setPaymentMethod(method.id)}
+                        className="w-5 h-5 text-sage-600"
+                      />
+                      <method.icon size={24} className={paymentMethod === method.id ? 'text-sage-600' : 'text-stone-400'} />
+                      <span className="font-medium text-stone-900">{method.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment Form based on method */}
+              {paymentMethod === 'credit_card' && (
+                <div className="bg-stone-50 rounded-xl p-5 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-2">Nomor Kartu</label>
+                    <input
+                      type="text"
+                      placeholder="1234 5678 9012 3456"
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-stone-700 mb-2">Expiry</label>
+                      <input type="text" placeholder="MM/YY" className="w-full px-4 py-3 border border-stone-300 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-stone-700 mb-2">CVV</label>
+                      <input type="text" placeholder="123" className="w-full px-4 py-3 border border-stone-300 rounded-lg" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {paymentMethod === 'ewallet' && (
+                <div className="bg-stone-50 rounded-xl p-5 text-center">
+                  <Smartphone size={48} className="mx-auto text-sage-600 mb-3" />
+                  <p className="text-stone-600">Pilih e-wallet Anda dan scan QR code atau klik tombol di bawah</p>
+                </div>
+              )}
+
+              {paymentMethod === 'bank_transfer' && (
+                <div className="bg-stone-50 rounded-xl p-5">
+                  <div className="text-center mb-4">
+                    <Building2 size={48} className="mx-auto text-sage-600 mb-3" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-stone-200">
+                      <span className="font-medium">Bank Mandiri</span>
+                      <span className="text-stone-600">1234567890</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-stone-200">
+                      <span className="font-medium">Bank BCA</span>
+                      <span className="text-stone-600">0987654321</span>
+                    </div>
+                    <p className="text-sm text-stone-500 text-center">Transfer sesuai nominal dan upload bukti pembayaran</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Order Summary */}
+              <div className="bg-stone-50 rounded-xl p-5 border border-stone-200">
+                <h3 className="font-semibold text-stone-900 mb-4">Total Pembayaran</h3>
+                <div className="text-3xl font-serif font-bold text-sage-600">
+                  Rp {formatPrice(calculateFinalPrice())}
+                </div>
+              </div>
+
+              <button
+                onClick={handlePayment}
+                disabled={isProcessing}
+                className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    Memproses Pembayaran...
+                  </>
+                ) : (
+                  'Bayar Sekarang'
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3: Success */}
+        {step === 3 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-6 text-center"
+          >
+            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 size={64} className="text-green-600" />
+            </div>
+            <h2 className="text-3xl font-serif font-semibold text-stone-900 mb-3">Pesanan Berhasil!</h2>
+            <p className="text-stone-600 mb-8 max-w-md mx-auto">
+              Terima kasih telah melakukan booking. Detail pesanan telah dikirim ke email Anda.
+            </p>
+
+            <div className="bg-stone-50 rounded-xl p-6 text-left mb-8">
+              <h3 className="font-semibold text-stone-900 mb-4">Detail Pesanan</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-stone-600">ID Pesanan</span>
+                  <span className="font-medium">#WS{Math.floor(Math.random() * 10000)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-600">Perawatan</span>
+                  <span className="font-medium">{service.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-600">Tanggal & Waktu</span>
+                  <span className="font-medium">{formData.date} {formData.time}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-600">Lokasi</span>
+                  <span className="font-medium">{formData.location}</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-stone-200 mt-2">
+                  <span className="text-stone-900 font-semibold">Total</span>
+                  <span className="text-sage-600 font-bold">Rp {formatPrice(calculateFinalPrice())}</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="btn-primary px-8 py-3"
+            >
+              Tutup
+            </button>
+          </motion.div>
+        )}
+      </motion.div>
+    </div>
+  )
+}
 
 function PromoModal({ onApplyPromo, onSkip }) {
   const [promoCode, setPromoCode] = useState('')
@@ -299,11 +676,12 @@ function About() {
   )
 }
 
-function Services({ discount }) {
+function Services({ discount, onBookService }) {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 })
 
   const services = [
     {
+      id: 1,
       name: 'Signature Massage',
       description: 'Kombinasi unik teknik pijat tradisional dan modern yang disesuaikan dengan kebutuhan tubuh Anda.',
       duration: '90 - 120 menit',
@@ -311,6 +689,7 @@ function Services({ discount }) {
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=professional%20relaxing%20massage%20treatment%2C%20calm%20spa%20room%2C%20soft%20lighting&image_size=square_hd'
     },
     {
+      id: 2,
       name: 'Foot Reflexology',
       description: 'Perawatan refleksi kaki yang merangsang titik-titik energi untuk meningkatkan sirkulasi dan kesehatan.',
       duration: '90 menit',
@@ -318,6 +697,7 @@ function Services({ discount }) {
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=foot%20reflexology%20treatment%2C%20spa%20setting%2C%20relaxing%20atmosphere&image_size=square_hd'
     },
     {
+      id: 3,
       name: 'Deep Tissue Healing',
       description: 'Perawatan intensif untuk mengatasi ketegangan otot dan nyeri kronis dengan teknik pijat mendalam.',
       duration: '90 menit',
@@ -325,6 +705,7 @@ function Services({ discount }) {
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=deep%20tissue%20massage%2C%20professional%20therapist%2C%20spa%20environment&image_size=square_hd'
     },
     {
+      id: 4,
       name: 'Hot Stone Therapy',
       description: 'Terapi menggunakan batu basalt hangat untuk melepaskan ketegangan dan meningkatkan relaksasi.',
       duration: '90 menit',
@@ -332,6 +713,7 @@ function Services({ discount }) {
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=hot%20stone%20massage%2C%20luxury%20spa%2C%20relaxing%20experience&image_size=square_hd'
     },
     {
+      id: 5,
       name: 'Body Scrub & Wrap',
       description: 'Perawatan eksfoliasi dan wrap dengan bahan alami untuk kulit yang lembut dan bercahaya.',
       duration: '60 menit',
@@ -339,6 +721,7 @@ function Services({ discount }) {
       image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=body%20scrub%20treatment%2C%20natural%20ingredients%2C%20spa%20salon&image_size=square_hd'
     },
     {
+      id: 6,
       name: 'Facial Treatment',
       description: 'Perawatan wajah premium dengan produk organik untuk meremajakan dan menutrisi kulit.',
       duration: '60 - 90 menit',
@@ -427,9 +810,12 @@ function Services({ discount }) {
                         )}
                       </div>
                     </div>
-                    <a href="#kontak" className="text-sage-600 font-medium flex items-center gap-2 hover:gap-3 transition-all">
-                      Pesan <ChevronRight size={18} />
-                    </a>
+                    <button 
+                    onClick={() => onBookService(service)}
+                    className="btn-primary px-4 py-2 text-sm"
+                  >
+                    Pesan Sekarang
+                  </button>
                   </div>
                 </div>
               </motion.div>
@@ -964,6 +1350,7 @@ function Footer() {
 function App() {
   const [showPromoModal, setShowPromoModal] = useState(true)
   const [discount, setDiscount] = useState(0)
+  const [bookingModal, setBookingModal] = useState({ isOpen: false, service: null })
 
   const handleApplyPromo = (discountPercentage) => {
     setDiscount(discountPercentage)
@@ -974,6 +1361,14 @@ function App() {
     setShowPromoModal(false)
   }
 
+  const handleBookService = (service) => {
+    setBookingModal({ isOpen: true, service })
+  }
+
+  const handleCloseBooking = () => {
+    setBookingModal({ isOpen: false, service: null })
+  }
+
   return (
     <div className="min-h-screen">
       <AnimatePresence>
@@ -981,10 +1376,22 @@ function App() {
           <PromoModal onApplyPromo={handleApplyPromo} onSkip={handleSkip} />
         )}
       </AnimatePresence>
+      
+      <AnimatePresence>
+        {bookingModal.isOpen && (
+          <BookingModal
+            isOpen={bookingModal.isOpen}
+            onClose={handleCloseBooking}
+            service={bookingModal.service}
+            discount={discount}
+          />
+        )}
+      </AnimatePresence>
+      
       <Header discount={discount} />
       <Hero />
       <About />
-      <Services discount={discount} />
+      <Services discount={discount} onBookService={handleBookService} />
       <Philosophy />
       <Facilities />
       <Testimonials />
